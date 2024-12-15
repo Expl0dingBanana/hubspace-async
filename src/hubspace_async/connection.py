@@ -5,29 +5,14 @@ import datetime
 import logging
 from contextlib import suppress
 from dataclasses import asdict
-from typing import Any, Final, Optional
+from typing import Any, Optional
 
 from aiohttp import ClientSession
 
+from . import const
 from .auth import HubSpaceAuth
-from .const import HUBSPACE_DEFAULT_USERAGENT
 from .device import HubSpaceDevice, HubSpaceState, get_hs_device
 from .room import HubSpaceRoom, get_hs_room
-
-HUBSPACE_ACCOUNT_ID_URL: Final[str] = "https://api2.afero.net/v1/users/me"
-HUBSPACE_DEFAULT_ENCODING: Final[str] = "gzip"
-
-HUBSPACE_DATA_URL: Final[str] = "https://api2.afero.net/v1/accounts/{}/metadevices"
-
-HUBSPACE_DEVICE_STATE: Final[str] = (
-    "https://api2.afero.net/v1/accounts/{}/metadevices/{}/state"
-)
-HUBSPACE_DATA_HOST: Final[str] = "semantics2.afero.net"
-
-DEFAULT_HEADERS: Final[dict[str, str]] = {
-    "user-agent": HUBSPACE_DEFAULT_USERAGENT,
-    "accept-encoding": HUBSPACE_DEFAULT_ENCODING,
-}
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +93,7 @@ class HubSpaceConnection:
             }
         )
         async with self.client.get(
-            HUBSPACE_ACCOUNT_ID_URL, headers=headers
+            const.HUBSPACE_ACCOUNT_ID_URL, headers=headers
         ) as response:
             account_id = (
                 (await response.json())
@@ -125,12 +110,12 @@ class HubSpaceConnection:
         headers = get_headers(
             **{
                 "authorization": f"Bearer {token}",
-                "host": HUBSPACE_DATA_HOST,
+                "host": const.HUBSPACE_DATA_HOST,
             }
         )
         params = {"expansions": "state"}
         async with self.client.get(
-            HUBSPACE_DATA_URL.format(await self.account_id),
+            const.HUBSPACE_DATA_URL.format(await self.account_id),
             headers=headers,
             params=params,
         ) as response:
@@ -199,12 +184,12 @@ class HubSpaceConnection:
         :param device_id: ID of the device
         """
         logger.debug("Querying API for device [%s] states", device_id)
-        url = HUBSPACE_DEVICE_STATE.format(await self.account_id, device_id)
+        url = const.HUBSPACE_DEVICE_STATE.format(await self.account_id, device_id)
         token = await self._auth.token(self.client)
         headers = get_headers(
             **{
                 "authorization": f"Bearer {token}",
-                "host": HUBSPACE_DATA_HOST,
+                "host": const.HUBSPACE_DATA_HOST,
             }
         )
         async with self.client.get(url, headers=headers) as response:
@@ -240,7 +225,7 @@ class HubSpaceConnection:
         headers = get_headers(
             **{
                 "authorization": f"Bearer {token}",
-                "host": HUBSPACE_DATA_HOST,
+                "host": const.HUBSPACE_DATA_HOST,
                 "content-type": "application/json; charset=utf-8",
             }
         )
@@ -249,7 +234,7 @@ class HubSpaceConnection:
             state.lastUpdateTime = int(datetime.datetime.now().timestamp())
             payload_states.append(asdict(state))
         payload = {"metadeviceId": str(device_id), "values": payload_states}
-        url = HUBSPACE_DEVICE_STATE.format(await self.account_id, device_id)
+        url = const.HUBSPACE_DEVICE_STATE.format(await self.account_id, device_id)
         async with self.client.put(url, headers=headers, json=payload) as response:
             response.raise_for_status()
 
@@ -263,6 +248,6 @@ class HubSpaceConnection:
 
 
 def get_headers(**kwargs):
-    headers = copy.copy(DEFAULT_HEADERS)
+    headers = copy.copy(const.DEFAULT_HEADERS)
     headers.update(kwargs)
     return headers

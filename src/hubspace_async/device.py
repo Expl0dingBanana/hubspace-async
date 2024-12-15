@@ -100,3 +100,15 @@ def get_hs_device(hs_device: dict[str, Any]) -> HubSpaceDevice:
         "manufacturerName": device.get("manufacturerName"),
     }
     return HubSpaceDevice(**dev_dict)
+
+
+def get_function_from_device(
+    hs_device: HubSpaceDevice, function_class: str, function_instance
+) -> dict:
+    for func in hs_device.functions:
+        if func.get("functionClass") != function_class:
+            continue
+        if func.get("functionInstance") != function_instance:
+            continue
+        return func
+    return None
