@@ -1,4 +1,4 @@
-This repo has been superseded`aioafero <https://github.com/Expl0dingBanana/aioafero>`_.
+This repo has been superseded `aioafero <https://github.com/Expl0dingBanana/aioafero>`_.
 
 
 
